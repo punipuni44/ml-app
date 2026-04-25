@@ -26,5 +26,6 @@ def root():
 # 予測API
 @app.get("/predict")
 def predict(day: int):
-    result = model.predict([[day]])
+    input_data = pd.DataFrame([[day]], columns=["day"])
+    result = model.predict(input_data)
     return {"prediction": float(result[0])}
