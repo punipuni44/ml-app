@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from sklearn.linear_model import LinearRegression
 import pandas as pd
+import sqlite3
 
 app = FastAPI()
 
@@ -28,4 +29,18 @@ def root():
 def predict(day: int):
     input_data = pd.DataFrame([[day]], columns=["day"])
     result = model.predict(input_data)
-    return {"prediction": float(result[0])}
+    prediction = float(result[0])
+
+    # DB保存
+    conn = sqlite3.connect("data.db")
+    cursor = conn.cursor()
+    
+    cursor.execute(
+        "INSERT INTO logs (day, prediction) VALUES (?, ?)",
+        (day, prediction)
+    )
+
+    conn.commit()
+    conn.close()
+
+    return {"prediction" : prediction}
