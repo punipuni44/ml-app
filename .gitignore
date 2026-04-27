@@ -10,6 +10,9 @@ __pycache__/
 # DB
 data.db
 
+# test
+test.py
+
 # ログ
 logs/
 

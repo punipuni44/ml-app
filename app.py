@@ -44,3 +44,22 @@ def predict(day: int):
     conn.close()
 
     return {"prediction" : prediction}
+
+@app.get("/logs")
+def get_logs():
+    conn = sqlite3.connect("data.db")
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT id, day, prediction, created_at FROM logs")
+    rows = cursor.fetchall()
+
+    logs = []
+    for row in rows:
+        logs.append({
+            "id": row[0],
+            "day": row[1],
+            "prediction": row[2],
+            "created_at": row[3]
+        })
+
+    return {"logs": logs}
