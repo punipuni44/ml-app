@@ -1,23 +1,13 @@
 from fastapi import FastAPI
-from sklearn.linear_model import LinearRegression
 import pandas as pd
-import sqlite3
+
+from db import get_connection
+from crud import insert_log, fetch_logs, rows_to_logs
+from ml import create_model
 
 app = FastAPI()
 
-# データ
-data = {
-    "day": [1,2,3,4,5],
-    "sales": [100,150,200,250,300]
-}
-
-df = pd.DataFrame(data)
-X = df[["day"]]
-y = df["sales"]
-
-# モデル作成＆学習
-model = LinearRegression()
-model.fit(X, y)
+model = create_model()
 
 # ルート
 @app.get("/")
@@ -32,34 +22,27 @@ def predict(day: int):
     prediction = float(result[0])
 
     # DB保存
-    conn = sqlite3.connect("data.db")
-    cursor = conn.cursor()
-    
-    cursor.execute(
-        "INSERT INTO logs (day, prediction) VALUES (?, ?)",
-        (day, prediction)
-    )
+    conn = get_connection()
+    try:
+        cursor = conn.cursor()
+        insert_log(cursor, day, prediction)
+        conn.commit()
+    finally:
+        conn.close()
 
-    conn.commit()
-    conn.close()
+    return {"prediction": prediction}
 
-    return {"prediction" : prediction}
-
+# レコード取得API
 @app.get("/logs")
-def get_logs():
-    conn = sqlite3.connect("data.db")
-    cursor = conn.cursor()
-
-    cursor.execute("SELECT id, day, prediction, created_at FROM logs")
-    rows = cursor.fetchall()
-
-    logs = []
-    for row in rows:
-        logs.append({
-            "id": row[0],
-            "day": row[1],
-            "prediction": row[2],
-            "created_at": row[3]
-        })
+def get_logs() -> dict:
+    conn = get_connection()
+    try:
+        cursor = conn.cursor()
+        # DBからログ一覧を取得
+        rows = fetch_logs(cursor)
+        # API用形式に変換
+        logs = rows_to_logs(rows)
+    finally:
+        conn.close()
 
     return {"logs": logs}
