@@ -1,4 +1,3 @@
-
 # レコード全取得
 def insert_log(cursor, day, prediction):
     cursor.execute(

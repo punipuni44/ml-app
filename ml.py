@@ -15,3 +15,5 @@ def create_model():
     # モデル作成＆学習
     model = LinearRegression()
     model.fit(X, y)
+
+    return model

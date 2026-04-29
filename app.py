@@ -11,12 +11,12 @@ model = create_model()
 
 # ルート
 @app.get("/")
-def root():
+def root() -> dict:
     return {"message": "API is running"}
 
 # 予測API
 @app.get("/predict")
-def predict(day: int):
+def predict(day: int) -> dict:
     input_data = pd.DataFrame([[day]], columns=["day"])
     result = model.predict(input_data)
     prediction = float(result[0])
