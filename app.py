@@ -1,7 +1,8 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 import pandas as pd
+from sqlite3 import Connection
 
-from db import get_connection
+from db import get_db
 from crud import insert_log, fetch_logs, rows_to_logs
 from ml import create_model
 
@@ -16,33 +17,29 @@ def root() -> dict:
 
 # 予測API
 @app.get("/predict")
-def predict(day: int) -> dict:
+def predict(day: int, db: Connection = Depends(get_db)) -> dict:
+
+    # モデル学習・予測
     input_data = pd.DataFrame([[day]], columns=["day"])
     result = model.predict(input_data)
     prediction = float(result[0])
 
     # DB保存
-    conn = get_connection()
-    try:
-        cursor = conn.cursor()
-        insert_log(cursor, day, prediction)
-        conn.commit()
-    finally:
-        conn.close()
+    cursor = db.cursor()
+    insert_log(cursor, day, prediction)
 
     return {"prediction": prediction}
 
 # レコード取得API
 @app.get("/logs")
-def get_logs() -> dict:
-    conn = get_connection()
-    try:
-        cursor = conn.cursor()
-        # DBからログ一覧を取得
-        rows = fetch_logs(cursor)
-        # API用形式に変換
-        logs = rows_to_logs(rows)
-    finally:
-        conn.close()
+def get_logs(db: Connection = Depends(get_db)) -> dict:
+
+    cursor = db.cursor()
+
+    # DBからログ一覧を取得
+    rows = fetch_logs(cursor)
+
+    # API用形式に変換
+    logs = rows_to_logs(rows)
 
     return {"logs": logs}
