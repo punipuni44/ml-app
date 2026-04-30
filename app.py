@@ -5,6 +5,7 @@ from sqlite3 import Connection
 from db import get_db
 from crud import insert_log, fetch_logs, rows_to_logs
 from ml import create_model
+from schemas import PredictionResponse, LogsResponse
 
 app = FastAPI()
 
@@ -16,8 +17,8 @@ def root() -> dict:
     return {"message": "API is running"}
 
 # 予測API
-@app.get("/predict")
-def predict(day: int, db: Connection = Depends(get_db)) -> dict:
+@app.get("/predict", response_model=PredictionResponse)
+def predict(day: int, db: Connection = Depends(get_db)) -> PredictionResponse:
 
     # モデル学習・予測
     input_data = pd.DataFrame([[day]], columns=["day"])
@@ -31,8 +32,8 @@ def predict(day: int, db: Connection = Depends(get_db)) -> dict:
     return {"prediction": prediction}
 
 # レコード取得API
-@app.get("/logs")
-def get_logs(db: Connection = Depends(get_db)) -> dict:
+@app.get("/logs", response_model=LogsResponse)
+def get_logs(db: Connection = Depends(get_db)) -> LogsResponse:
 
     cursor = db.cursor()
 
