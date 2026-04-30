@@ -5,7 +5,7 @@ from sqlite3 import Connection
 from db import get_db
 from crud import insert_log, fetch_logs, rows_to_logs
 from ml import create_model
-from schemas import PredictionResponse, LogsResponse
+from schemas import PredictionResponse, LogsResponse, ErrorResponse
 
 app = FastAPI()
 
@@ -17,7 +17,13 @@ def root() -> dict:
     return {"message": "API is running"}
 
 # 予測API
-@app.get("/predict", response_model=PredictionResponse)
+@app.get(
+    "/predict", 
+    response_model=PredictionResponse,
+    responses={
+        400: {"model": ErrorResponse}
+    }
+)
 def predict(
     day: int = Query(ge=1, le=365), 
     db: Connection = Depends(get_db)
@@ -32,7 +38,12 @@ def predict(
     if prediction < 0:
         raise HTTPException(
             status_code=400,
-            detail="Prediction result must be non-negative"
+            detail={
+                "error": {
+                    "code": "INVALID_PREDICTION",
+                    "message": "Prediction result must be non-negative"
+                }
+            }
         )
 
     # DB保存

@@ -12,3 +12,10 @@ class LogResponse(BaseModel):
 
 class LogsResponse(BaseModel):
     logs: list[LogResponse]
+
+class ErrorDetail(BaseModel):
+    code: str
+    message: str
+
+class ErrorResponse(BaseModel):
+    error: ErrorDetail
