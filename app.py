@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, Query
+from fastapi import FastAPI, Depends, Query, HTTPException
 import pandas as pd
 from sqlite3 import Connection
 
@@ -27,6 +27,13 @@ def predict(
     input_data = pd.DataFrame([[day]], columns=["day"])
     result = model.predict(input_data)
     prediction = float(result[0])
+
+    # エラーハンドリング
+    if prediction < 0:
+        raise HTTPException(
+            status_code=400,
+            detail="Prediction result must be non-negative"
+        )
 
     # DB保存
     cursor = db.cursor()
