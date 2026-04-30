@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, Query
 import pandas as pd
 from sqlite3 import Connection
 
@@ -18,7 +18,10 @@ def root() -> dict:
 
 # 予測API
 @app.get("/predict", response_model=PredictionResponse)
-def predict(day: int, db: Connection = Depends(get_db)) -> PredictionResponse:
+def predict(
+    day: int = Query(ge=1, le=365), 
+    db: Connection = Depends(get_db)
+) -> PredictionResponse:
 
     # モデル学習・予測
     input_data = pd.DataFrame([[day]], columns=["day"])
