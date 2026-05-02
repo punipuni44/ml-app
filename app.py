@@ -1,4 +1,6 @@
 from fastapi import FastAPI, Depends, Query, HTTPException
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 import pandas as pd
 from sqlite3 import Connection
 
@@ -10,6 +12,18 @@ from schemas import PredictionResponse, LogsResponse, ErrorResponse
 app = FastAPI()
 
 model = create_model()
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request, exc):
+    return JSONResponse(
+        status_code=422,
+        content={
+            "error": {
+                "code": "VALIDATION_ERROR",
+                "message": "Invalid request parameter"
+            }
+        },
+    )
 
 # ルート
 @app.get("/")
