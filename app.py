@@ -15,12 +15,14 @@ model = create_model()
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request, exc):
+    first_error = exc.errors()[0]
+
     return JSONResponse(
         status_code=422,
         content={
             "error": {
                 "code": "VALIDATION_ERROR",
-                "message": "Invalid request parameter"
+                "message": first_error["msg"]
             }
         },
     )
