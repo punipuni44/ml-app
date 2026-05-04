@@ -1,31 +1,20 @@
-from fastapi import FastAPI, Depends, Query, HTTPException
-from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
-import pandas as pd
 from sqlite3 import Connection
 
+import pandas as pd
+from fastapi import Depends, FastAPI, HTTPException, Query
+from fastapi.exceptions import RequestValidationError
+
+from crud import fetch_logs, insert_log, rows_to_logs
 from db import get_db
-from crud import insert_log, fetch_logs, rows_to_logs
+from handlers import validation_exception_handler
 from ml import create_model
-from schemas import PredictionResponse, LogsResponse, ErrorResponse
+from schemas import ErrorResponse, LogsResponse, PredictionResponse
 
 app = FastAPI()
 
+app.add_exception_handler(RequestValidationError, validation_exception_handler)
+
 model = create_model()
-
-@app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request, exc):
-    first_error = exc.errors()[0]
-
-    return JSONResponse(
-        status_code=422,
-        content={
-            "error": {
-                "code": "VALIDATION_ERROR",
-                "message": first_error["msg"]
-            }
-        },
-    )
 
 # ルート
 @app.get("/")
@@ -35,9 +24,12 @@ def root() -> dict:
 # 予測API
 @app.get(
     "/predict", 
+    # 正常系レスポンスのスキーマ
     response_model=PredictionResponse,
+    # エラー系レスポンスのスキーマ
     responses={
-        400: {"model": ErrorResponse}
+        400: {"model": ErrorResponse},
+        422: {"model": ErrorResponse}
     }
 )
 def predict(
